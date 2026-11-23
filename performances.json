@@ -1,0 +1,27 @@
+{
+  "Régression logistique": {
+    "auc_cv": 0.702,
+    "auc_cv_et": 0.012,
+    "brier_cv": 0.1762,
+    "auc_test": 0.709,
+    "auc_test_ic": [
+      0.681,
+      0.742
+    ],
+    "brier_test": 0.1764
+  },
+  "Gradient boosting": {
+    "auc_cv": 0.69,
+    "auc_cv_et": 0.017,
+    "brier_cv": 0.1789,
+    "auc_test": 0.697,
+    "auc_test_ic": [
+      0.668,
+      0.729
+    ],
+    "brier_test": 0.1786
+  },
+  "Référence (taux moyen)": {
+    "brier_test": 0.1995
+  }
+}
