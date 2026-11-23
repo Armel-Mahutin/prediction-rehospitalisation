@@ -16,7 +16,8 @@ Auteur : Armel Mahutin KANHONOU · [Portfolio](https://armel-mahutin.github.io) 
 2. **Prétraitement dans un pipeline** (imputation par la médiane, standardisation, encodage) : il est appris sur les seules données d'apprentissage de chaque pli, ce qui évite toute fuite de données.
 3. **Validation croisée stratifiée à 5 plis** sur le jeu d'apprentissage.
 4. **Évaluation finale sur le jeu de test** : AUC avec intervalle de confiance à 95 % (1 000 rééchantillonnages bootstrap), score de Brier, courbe de calibration.
-5. **Importance des variables par permutation** sur le jeu de test.
+5. **Comparaison directe des deux modèles** : différence d'AUC avec un bootstrap apparié (2 000 rééchantillonnages, les mêmes patients tirés pour les deux modèles), ce qui tient compte de la corrélation entre leurs prédictions.
+6. **Importance des variables par permutation** sur le jeu de test.
 
 ## Résultats
 
@@ -26,11 +27,13 @@ Auteur : Armel Mahutin KANHONOU · [Portfolio](https://armel-mahutin.github.io) 
 | Gradient boosting | 0,690 (± 0,017) | 0,697 (0,668 – 0,729) | 0,179 |
 | Référence : taux moyen | – | 0,500 | 0,200 |
 
+**Différence d'AUC (logistique moins boosting) :** +0,012 (IC 95 % : −0,003 à +0,027). L'intervalle contient zéro : l'écart entre les deux modèles peut relever du hasard, et le boosting ne fait mieux que dans 6 % des rééchantillonnages.
+
 **Lecture :** le gradient boosting ne fait pas mieux que la régression logistique, alors qu'il est plus complexe et moins interprétable. Avec quelques variables cliniques bien choisies, un modèle simple et bien calibré suffit souvent. Les deux modèles restent modérément discriminants (AUC autour de 0,70), ce qui est habituel pour la réhospitalisation.
 
-![Discrimination et calibration](1%20discrimination%20et%20calibration.png)
+![Discrimination et calibration](figures/1%20discrimination%20et%20calibration.png)
 
-![Importance des variables](2%20importance%20des%20variables.png)
+![Importance des variables](figures/2%20importance%20des%20variables.png)
 
 ## Limites
 
@@ -43,18 +46,16 @@ Auteur : Armel Mahutin KANHONOU · [Portfolio](https://armel-mahutin.github.io) 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
-python simuler.py
-python modeliser.py
+python src/simuler.py
+python src/modeliser.py
 ```
 
 ## Organisation
 
-Tous les fichiers sont à la racine du dépôt.
-
 ```
-simuler.py            simulation de la cohorte et du vrai modèle de risque
-modeliser.py          pipelines, validation croisée, évaluation, figures
-cohorte simulee.csv   cohorte simulée
-performances.json     performances des modèles
-*.png                 figures
+src/simuler.py      simulation de la cohorte et du vrai modèle de risque
+src/modeliser.py    pipelines, validation croisée, évaluation, figures
+donnees/            cohorte simulée
+resultats/          performances (JSON)
+figures/            figures
 ```

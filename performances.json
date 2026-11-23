@@ -23,5 +23,14 @@
   },
   "Référence (taux moyen)": {
     "brier_test": 0.1995
+  },
+  "Différence d'AUC (logistique moins boosting), bootstrap apparié": {
+    "lr_moins_gb": 0.012,
+    "ic95": [
+      -0.003,
+      0.027
+    ],
+    "part_bootstrap_gb_meilleur": 0.059,
+    "n_bootstrap": 2000
   }
 }

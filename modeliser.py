@@ -18,7 +18,7 @@ from sklearn.metrics import roc_auc_score, brier_score_loss, roc_curve
 from sklearn.calibration import calibration_curve
 from sklearn.inspection import permutation_importance
 
-d = pd.read_csv("cohorte simulee.csv")
+d = pd.read_csv("donnees/cohorte simulee.csv")
 y = d.pop("rehospit_30j")
 num = ["age", "duree_sejour", "nb_hospit_an", "charlson"]
 bin_ = ["diabete", "insuffisance_cardiaque", "vit_seul", "precarite"]
@@ -67,11 +67,29 @@ for nom, pipe in modeles.items():
         brier_test=round(brier_score_loss(y_test, p), 4))
     resultats[nom]["_p"] = p
 
+# Différence d'AUC entre les deux modèles : bootstrap APPARIÉ (mêmes patients
+# tirés pour les deux modèles), pour savoir si l'écart dépasse le hasard
+p_lr, p_gb = resultats["Régression logistique"]["_p"], resultats["Gradient boosting"]["_p"]
+rng = np.random.default_rng(7)
+diffs = []
+for _ in range(2000):
+    i = rng.integers(0, len(y_test), len(y_test))
+    if y_test.iloc[i].nunique() == 2:
+        diffs.append(roc_auc_score(y_test.iloc[i], p_lr[i]) - roc_auc_score(y_test.iloc[i], p_gb[i]))
+diffs = np.array(diffs)
+diff_obs = roc_auc_score(y_test, p_lr) - roc_auc_score(y_test, p_gb)
+difference = dict(
+    lr_moins_gb=round(float(diff_obs), 3),
+    ic95=[round(float(np.percentile(diffs, 2.5)), 3), round(float(np.percentile(diffs, 97.5)), 3)],
+    part_bootstrap_gb_meilleur=round(float((diffs < 0).mean()), 3),
+    n_bootstrap=int(len(diffs)))
+
 base = y_test.mean()
 brier_ref = round(brier_score_loss(y_test, np.full(len(y_test), y_app.mean())), 4)
 sortie = {k: {kk: vv for kk, vv in v.items() if kk != "_p"} for k, v in resultats.items()}
 sortie["Référence (taux moyen)"] = {"brier_test": brier_ref}
-json.dump(sortie, open("performances.json", "w", encoding="utf-8"),
+sortie["Différence d'AUC (logistique moins boosting), bootstrap apparié"] = difference
+json.dump(sortie, open("resultats/performances.json", "w", encoding="utf-8"),
           ensure_ascii=False, indent=2)
 print(json.dumps(sortie, ensure_ascii=False, indent=2))
 
@@ -90,7 +108,7 @@ ax[1].plot([0, lim], [0, lim], "--", color="grey")
 ax[1].set(xlabel="Risque prédit", ylabel="Fréquence observée",
           title="Calibration (déciles de risque)")
 for a in ax: a.legend(frameon=False, fontsize=9); a.spines[["top", "right"]].set_visible(False)
-fig.tight_layout(); fig.savefig("1 discrimination et calibration.png", dpi=170)
+fig.tight_layout(); fig.savefig("figures/1 discrimination et calibration.png", dpi=170)
 
 # Figure 2 : importance des variables par permutation (modèle logistique)
 pi = permutation_importance(modeles["Régression logistique"], X_test, y_test,
@@ -101,4 +119,4 @@ ax.barh(imp.index, imp.values, color="#3f7f86")
 ax.set(xlabel="Perte d'AUC quand la variable est permutée",
        title="Importance des variables (régression logistique)")
 ax.spines[["top", "right"]].set_visible(False)
-fig.tight_layout(); fig.savefig("2 importance des variables.png", dpi=170)
+fig.tight_layout(); fig.savefig("figures/2 importance des variables.png", dpi=170)
